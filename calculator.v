@@ -27,18 +27,18 @@ fn (mut a App) render_calculator_results() {
 
 	result := a.cached_calculator_result or { return }
 
-	text := result.str()
+	text := result
 	a.draw_centered_text(8 * padding, height + calculator_extra_height / 2, text, text_color,
 		background_200_color)
 }
 
 fn (mut a App) copy_calculator_result_to_clipboard() {
 	result := a.cached_calculator_result or { return }
-	text := result.str()
+	text := result
 	copy_to_clipboard(text)
 }
 
-fn (mut a App) find_calculator_expression() ?CalculatorResult {
+fn (mut a App) find_calculator_expression() ?string {
 	mut parser := Parser{
 		text: a.search_input.value
 		end:  a.search_input.value.len
@@ -132,19 +132,13 @@ fn (mut a App) find_calculator_expression() ?CalculatorResult {
 		}
 	}
 
-	mut parsed := CalculatorResult{
-		expr:               &ast
-		suffix_data_type:   suffix_data_type
-		suffix_custom_unit: suffix_custom_unit
-		suffix_si_prefix:   suffix_si_prefix
+	result := ast.evaluate() or {
+		eprintln('Failed to evaluate calculator expression: ${err}')
+		return 'Error: ${err}'
 	}
 
-	parsed.result = ast.evaluate() or {
-		parsed.error = err
-		return parsed
-	}
-
-	return parsed
+	return calc_stringify_result(result, suffix_data_type, suffix_custom_unit,
+		suffix_si_prefix)
 }
 
 struct Parser {
@@ -544,28 +538,15 @@ fn (mut p Parser) parse_function_call() !CalcExpr {
 	}
 }
 
-struct CalculatorResult {
-	suffix_data_type   CalcSufDataType
-	suffix_custom_unit string
-	suffix_si_prefix   bool
-	expr               &CalcExpr
-mut:
-	result ?f64
-	error  ?IError
-}
-
-fn (p &CalculatorResult) str() string {
-	if p.error != none {
-		return 'Error: ${p.error.msg()}'
-	}
-	mut v := p.result or { 0.0 }
+fn calc_stringify_result(result f64, suffix_data_type CalcSufDataType, suffix_custom_unit string, suffix_si_prefix bool) string {
+	mut v := result
 	mut s := ''
 
-	match p.suffix_data_type {
+	match suffix_data_type {
 		.none {}
 		.milliseconds, .seconds, .minutes, .hours, .days, .weeks, .months, .years {
 			mut multiplier := 1.0
-			match p.suffix_data_type {
+			match suffix_data_type {
 				.milliseconds {
 					multiplier = 1.0
 				}
@@ -614,11 +595,11 @@ fn (p &CalculatorResult) str() string {
 			return '= 0x${strconv.format_uint(u64(v), 16)}'
 		}
 		.custom {
-			s = '${p.suffix_custom_unit}'
+			s = '${suffix_custom_unit}'
 		}
 	}
 
-	if p.suffix_si_prefix {
+	if suffix_si_prefix {
 		mut si_prefix := ''
 		mut abs_v := v
 		if abs_v < 0 {

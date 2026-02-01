@@ -87,7 +87,7 @@ mut:
 	cached_application_icon    ?CachedApplicationIcon
 	cached_exchange_rate_query ?CurrencyExchangeRateQuery
 	cached_command             ?Command
-	cached_calculator_result   ?CalculatorResult
+	cached_calculator_result   ?string
 }
 
 fn (mut a App) run() {

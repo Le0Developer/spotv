@@ -137,8 +137,7 @@ fn (mut a App) find_calculator_expression() ?string {
 		return 'Error: ${err}'
 	}
 
-	return calc_stringify_result(result, suffix_data_type, suffix_custom_unit,
-		suffix_si_prefix)
+	return calc_stringify_result(result, suffix_data_type, suffix_custom_unit, suffix_si_prefix)
 }
 
 struct Parser {

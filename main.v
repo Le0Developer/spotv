@@ -75,6 +75,7 @@ struct App {
 mut:
 	was_hotkey_pressed bool
 	should_hide        bool
+	should_quit        bool
 	is_hiding          bool
 	is_initial_render  bool
 	frames             int
@@ -90,8 +91,6 @@ mut:
 }
 
 fn (mut a App) run() {
-	mut should_close := false
-
 	target_fps_while_inactive := u32(5)
 	target_ms_per_frame_inactive := u32(1000) / target_fps_while_inactive
 	mut last_time := sdl.get_ticks64()
@@ -210,7 +209,7 @@ fn (mut a App) run() {
 					a.evaluate()
 				}
 				.quit {
-					should_close = true
+					a.should_quit = true
 				}
 				.mousemotion, .mousewheel, .mousebuttondown, .mousebuttonup {}
 				else {
@@ -219,7 +218,7 @@ fn (mut a App) run() {
 			}
 		}
 
-		if should_close {
+		if a.should_quit {
 			break
 		}
 

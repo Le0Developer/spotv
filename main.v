@@ -1,5 +1,6 @@
 module main
 
+import time
 import os
 import sdl
 import sdl.ttf
@@ -88,6 +89,9 @@ mut:
 	cached_exchange_rate_query ?CurrencyExchangeRateQuery
 	cached_command             ?Command
 	cached_calculator_result   ?string
+
+	history_timestamp ?time.Time
+	history_temp_save ?string
 }
 
 fn (mut a App) run() {
@@ -127,6 +131,12 @@ fn (mut a App) run() {
 							a.should_hide = true
 							a.reset()
 						}
+						.up {
+							a.history_load_older()
+						}
+						.down {
+							a.history_load_newer()
+						}
 						.left, .right {
 							dir := if keycode == .left {
 								MoveDirection.left
@@ -138,6 +148,7 @@ fn (mut a App) run() {
 						}
 						.backspace {
 							a.search_input.backspace(mod)
+							a.history_timestamp = none
 							a.evaluate()
 						}
 						.a {
@@ -150,6 +161,7 @@ fn (mut a App) run() {
 								selected := a.search_input.get_selected_text()
 								copy_to_clipboard(selected)
 								a.search_input.delete_selection()
+								a.history_timestamp = none
 								a.evaluate()
 							}
 						}
@@ -163,6 +175,7 @@ fn (mut a App) run() {
 							if is_cmd {
 								if clipboard_text := get_text_from_clipboard() {
 									a.search_input.insert_text(clipboard_text)
+									a.history_timestamp = none
 									a.evaluate()
 								}
 							}
@@ -174,7 +187,6 @@ fn (mut a App) run() {
 								}
 								.application {
 									a.launch_application()
-									a.reset()
 									a.should_hide = true
 								}
 								.currency_exchange {
@@ -189,6 +201,10 @@ fn (mut a App) run() {
 									a.copy_calculator_result_to_clipboard()
 									a.should_hide = true
 								}
+							}
+							if a.mod != .none {
+								a.save_history_entry(a.search_input.value)
+								a.reset()
 							}
 						}
 						else {}
@@ -206,6 +222,7 @@ fn (mut a App) run() {
 				.textinput {
 					text_event := evt.text
 					a.search_input.insert_text(unsafe { cstring_to_vstring(&text_event.text[0]) })
+					a.history_timestamp = none
 					a.evaluate()
 				}
 				.quit {
@@ -378,6 +395,7 @@ fn (mut a App) reset() {
 fn (mut a App) index() {
 	spawn a.index_applications()
 	spawn a.index_currency_exchange_rates()
+	spawn a.history_cleanup()
 }
 
 enum SearchModule {

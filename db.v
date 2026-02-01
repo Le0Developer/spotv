@@ -20,12 +20,20 @@ struct CurrencyExchangeRate {
 	last_updated  time.Time
 }
 
+@[table: 'history_entries']
+struct HistoryEntry {
+	id        int @[autoincrement; primary; sql: serial]
+	query     string
+	timestamp time.Time
+}
+
 fn create_database(path string) !sqlite.DB {
 	db := sqlite.connect(path)!
 
 	sql db {
 		create table IndexedApplication
 		create table CurrencyExchangeRate
+		create table HistoryEntry
 	}!
 
 	return db

@@ -9,6 +9,11 @@ fn (mut a App) launch_command() {
 		.quit {
 			a.should_quit = true
 		}
+		.clear_history {
+			sql a.db {
+				delete from HistoryEntry where true
+			} or { eprintln('Failed to clear history: ${err}') }
+		}
 	}
 }
 
@@ -20,6 +25,9 @@ fn (mut a App) find_command() ?Command {
 		'/quit' {
 			.quit
 		}
+		'/clear_history' {
+			.clear_history
+		}
 		else {
 			none
 		}
@@ -29,4 +37,5 @@ fn (mut a App) find_command() ?Command {
 enum Command {
 	index
 	quit
+	clear_history
 }

@@ -23,6 +23,12 @@ fn (mut inp Input) reset() {
 	inp.clear_selection()
 }
 
+fn (mut inp Input) set_value(value string) {
+	inp.reset()
+	inp.value = value
+	inp.cursor_pos = value.len
+}
+
 fn (mut inp Input) delete_selection() {
 	if !inp.has_selection() {
 		return

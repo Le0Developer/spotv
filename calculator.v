@@ -21,6 +21,8 @@ const operator_precedence = {
 	CalcExprOperation.bshift_right: 0
 }
 
+const discord_epoch = u64(1420070400000) // January 1, 2015
+
 fn (mut a App) render_calculator_results() {
 	a.set_draw_color(background_200_color)
 	sdl.render_fill_rect(a.renderer, &sdl.Rect{0, height, width, calculator_extra_height})
@@ -101,6 +103,9 @@ fn (mut a App) find_calculator_expression() ?string {
 			}
 			'munix' {
 				suffix_data_type = .unix_ms
+			}
+			'snowflake' {
+				suffix_data_type = .snowflake
 			}
 			'x' {
 				suffix_data_type = .hex
@@ -586,6 +591,10 @@ fn calc_stringify_result(result f64, suffix_data_type CalcSufDataType, suffix_cu
 			t := time.unix_milli(i64(v))
 			s = '(${t.format_ss()})'
 		}
+		.snowflake {
+			t := time.unix_milli(u64(v) >> 22 + discord_epoch)
+			s = '(${t.format_ss()})'
+		}
 		.binary {
 			return '= 0b${strconv.format_uint(u64(v), 2)}'
 		}
@@ -835,6 +844,7 @@ enum CalcSufDataType {
 
 	unix
 	unix_ms
+	snowflake
 
 	binary
 	octal

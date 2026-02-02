@@ -336,7 +336,8 @@ fn (mut p Parser) parse_number_decimal() !CalcExpr {
 	mut last_e := false
 	for !p.eof() {
 		ch := p.current_char() or { break }
-		if ch.is_digit() || ch == `.` || ch == `e` || ch == `E` || (last_e && (ch == `+` || ch == `-`)) {
+		if ch.is_digit() || ch == `.` || ch == `e` || ch == `E`
+			|| (last_e && (ch == `+` || ch == `-`)) {
 			p.advance()
 			accu << ch
 			last_e = ch == `e` || ch == `E`

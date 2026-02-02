@@ -85,12 +85,18 @@ struct CurrencyExchangeRateQuery {
 
 fn (mut a App) index_currency_exchange_rates() {
 	// Check if rates are outdated (older than 1 day)
-	outdated := sql a.db {
-		select count from CurrencyExchangeRate where last_updated < time.now().add_days(-1)
-	} or { 1 }
 
-	if outdated == 0 {
-		return
+	total := sql a.db {
+		select count from CurrencyExchangeRate
+	} or { 1 }
+	if total > 0 {
+		outdated := sql a.db {
+			select count from CurrencyExchangeRate where last_updated < time.now().add_days(-1)
+		} or { 1 }
+
+		if outdated == 0 {
+			return
+		}
 	}
 
 	res := http.get(exchange_url) or {

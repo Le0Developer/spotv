@@ -14,7 +14,7 @@ const calculator_extra_height = 80
 const padding = 4
 const font_size = 20
 
-const font_file = './assets/NotoSans.ttf'
+const font_bytes = $embed_file('assets/NotoSans.ttf')
 
 fn main() {
 	if sdl.init(sdl.init_video) != 0 {
@@ -35,8 +35,21 @@ fn main() {
 
 	window := sdl.create_window(c'spot.v', int(sdl.windowpos_centered_display(300)), int(sdl.windowpos_centered_display(300)),
 		width, height, u32(sdl.WindowFlags.borderless))
+	if window == 0 {
+		panic('Failed to create SDL window: ${unsafe { cstring_to_vstring(sdl.get_error()) }}')
+	}
 	renderer := sdl.create_renderer(window, -1, u32(sdl.RendererFlags.accelerated) | u32(sdl.RendererFlags.presentvsync))
-	font := ttf.open_font(font_file.str, font_size)
+	if renderer == 0 {
+		panic('Failed to create SDL renderer: ${unsafe { cstring_to_vstring(sdl.get_error()) }}')
+	}
+
+	font_buf := font_bytes.to_bytes()
+	font_sdl_buf := sdl.rw_from_const_mem(font_buf.data, font_buf.len)
+
+	font := ttf.open_font_rw(font_sdl_buf, 0, font_size)
+	if font == 0 {
+		panic('Failed to load font: ${unsafe { cstring_to_vstring(sdl.get_error()) }}')
+	}
 
 	sdl.set_window_size(window, 1, 1)
 

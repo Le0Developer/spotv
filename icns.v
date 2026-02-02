@@ -135,7 +135,7 @@ struct ICNSIcon {
 
 // Unpack unpacks the icon data and returns the raw RGBA bytes.
 fn (icns ICNSIcon) unpack_sdl(renderer &sdl.Renderer) ?&sdl.Texture {
-	buffer := sdl.rw_from_mem(icns.data.data, icns.data.len)
+	buffer := sdl.rw_from_const_mem(icns.data.data, icns.data.len)
 	texture := image.load_texture_rw(renderer, buffer, 0)
 	if texture == 0 {
 		return none

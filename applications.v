@@ -1,7 +1,6 @@
 module main
 
 import os
-import strings
 import sdl
 
 const application_icon_size = application_extra_height - 8 * padding
@@ -18,7 +17,7 @@ fn (mut a App) render_application_results() {
 	}
 
 	a.draw_centered_text(8 * padding + application_icon_size, height + application_extra_height / 2,
-		'${application.name}', text_color, background_200_color)
+		application.name, text_color, background_200_color)
 
 	text_width, _ := a.size_text(application.name)
 	h_offset := 8 * padding + application_icon_size + text_width
@@ -104,54 +103,18 @@ struct CachedApplicationIcon {
 	texture ?&sdl.Texture
 }
 
-fn (mut a App) find_relevant_applications() ?IndexedApplication {
+fn (mut a App) find_relevant_applications() (?IndexedApplication, int) {
 	query := a.search_input.value.to_lower()
 
 	mut all_apps := sql a.db {
 		select from IndexedApplication
 	} or {
 		eprintln('Failed to query database: ${err}')
-		return none
+		return none, -1
 	}
 
-	mut relevance := map[int]int{}
-	for app in all_apps {
-		mut score := 0
-		name_lower := app.name.to_lower()
-		if name_lower.starts_with(query) {
-			score += 10
-		}
-		mut index := 0
-		for ch in query {
-			pos := name_lower.index_after(ch.ascii_str(), index)
-			if pos == none {
-				break
-			} else {
-				score += 3
-				bonus := 5 - (pos - index)
-				if bonus > 0 {
-					score += bonus
-				}
-				index = pos + 1
-			}
-		}
-
-		score += int(strings.levenshtein_distance_percentage(name_lower, query) * 0.05)
-
-		relevance[app.id] = score
-	}
-
-	all_apps.sort_with_compare(fn [relevance] (a &IndexedApplication, b &IndexedApplication) int {
-		return relevance[b.id] - relevance[a.id]
-	})
-
-	// for app in all_apps {
-	// 	if relevance[app.id] > 0 {
-	// 		println('App: ${app.name} Relevance: ${relevance[app.id]}')
-	// 	}
-	// }
-
-	return all_apps[0] or { none }
+	result := fuzzy_find(query.to_lower(), all_apps.map(it.name.to_lower())) or { return none, -1 }
+	return all_apps[result.index], result.score
 }
 
 fn (mut a App) index_applications() {

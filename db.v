@@ -12,6 +12,13 @@ struct IndexedApplication {
 	icon_path  ?string
 }
 
+@[table: 'system_preferences']
+struct SystemPreference {
+	id   int @[autoincrement; primary; sql: serial]
+	name string
+	path string @[unique]
+}
+
 @[table: 'currency_exchange_rates']
 struct CurrencyExchangeRate {
 	from_currency string
@@ -32,6 +39,7 @@ fn create_database(path string) !sqlite.DB {
 
 	sql db {
 		create table IndexedApplication
+		create table SystemPreference
 		create table CurrencyExchangeRate
 		create table HistoryEntry
 	}!

@@ -9,6 +9,7 @@ import db.sqlite
 const width = 800
 const height = 60
 const application_extra_height = 80
+const system_preference_extra_height = 60
 const currency_exchange_extra_height = 80
 const calculator_extra_height = 80
 const padding = 4
@@ -99,6 +100,7 @@ mut:
 	mod                        SearchModule
 	cached_application         ?IndexedApplication
 	cached_application_icon    ?CachedApplicationIcon
+	cached_system_preference   ?SystemPreference
 	cached_exchange_rate_query ?CurrencyExchangeRateQuery
 	cached_command             ?Command
 	cached_calculator_result   ?string
@@ -202,6 +204,10 @@ fn (mut a App) run() {
 									a.launch_application()
 									a.should_hide = true
 								}
+								.system_preference {
+									a.launch_system_preference()
+									a.should_hide = true
+								}
 								.currency_exchange {
 									a.copy_exchange_rate_to_clipboard()
 									a.should_hide = true
@@ -272,6 +278,9 @@ fn (mut a App) run() {
 				.application {
 					real_height += application_extra_height
 				}
+				.system_preference {
+					real_height += system_preference_extra_height
+				}
 				.currency_exchange {
 					real_height += currency_exchange_extra_height
 				}
@@ -317,6 +326,9 @@ fn (mut a App) run() {
 				.none {}
 				.application {
 					a.render_application_results()
+				}
+				.system_preference {
+					a.render_system_preference_results()
 				}
 				.currency_exchange {
 					a.render_currency_exchange_results()
@@ -391,9 +403,17 @@ fn (mut a App) evaluate() {
 	} else if result := a.find_calculator_expression() {
 		a.mod = .calculator
 		a.cached_calculator_result = result
-	} else if app := a.find_relevant_applications() {
-		a.mod = .application
-		a.cached_application = app
+	} else {
+		app, app_score := a.find_relevant_applications()
+		pref, pref_score := a.find_relevant_system_preferences()
+
+		if app_score > pref_score && app_score > 0 {
+			a.mod = .application
+			a.cached_application = app
+		} else if pref_score > app_score && pref_score > 0 {
+			a.mod = .system_preference
+			a.cached_system_preference = pref
+		}
 	}
 }
 
@@ -402,19 +422,22 @@ fn (mut a App) reset() {
 
 	a.mod = .none
 	a.cached_application = none
+	a.cached_system_preference = none
 	a.clear_application_icon_cache()
 	a.cached_exchange_rate_query = none
 }
 
 fn (mut a App) index() {
-	spawn a.index_applications()
-	spawn a.index_currency_exchange_rates()
-	spawn a.history_cleanup()
+	a.index_applications()
+	a.index_system_preferences()
+	a.index_currency_exchange_rates()
+	a.history_cleanup()
 }
 
 enum SearchModule {
 	none
 	application
+	system_preference
 	currency_exchange
 	command
 	calculator

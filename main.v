@@ -351,6 +351,7 @@ fn (mut a App) show() {
 	sdl.show_window(a.window)
 	C.focusWindow()
 	a.is_hiding = false
+	a.search_input.select_all()
 
 	a.evaluate()
 }

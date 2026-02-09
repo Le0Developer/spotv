@@ -53,6 +53,7 @@ fn main() {
 	}
 
 	sdl.set_window_size(window, 1, 1)
+	sdl.enable_screen_saver()
 
 	mut app := &App{
 		window:       window

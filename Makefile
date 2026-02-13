@@ -5,11 +5,15 @@ LAUNCHAGENT_NAME ?= xyz.leodev.spotv.app
 LAUNCHAGENTS ?= $(HOME)/Library/LaunchAgents
 LAUNCHAGENT_PATH ?= $(LAUNCHAGENTS)/$(LAUNCHAGENT_NAME).plist
 
+.PHONY: build update install fmt
+
 build:
 	v $(ARGS) -o $(BIN_NAME) .
 
-install: build
+update: build
 	cp $(BIN_NAME) $(BIN_DIR)/$(BIN_NAME)
+
+install: update
 	cp assets/launchagent.plist $(LAUNCHAGENT_PATH)
 	sed -i '' 's|{BIN}|$(BIN_DIR)/$(BIN_NAME)|g' $(LAUNCHAGENT_PATH)
 	sed -i '' 's|{NAME}|$(LAUNCHAGENT_NAME)|g' $(LAUNCHAGENT_PATH)
